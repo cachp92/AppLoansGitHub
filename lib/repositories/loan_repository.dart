@@ -6,13 +6,41 @@ class LoanRepository extends ChangeNotifier {
   final List<Loan> _loans = [];
   final AmortizationService _amortizationService;
 
-  LoanRepository(this._amortizationService);
+  LoanRepository(this._amortizationService) {
+    _seedDemoData();
+  }
 
   List<Loan> get loans => List.unmodifiable(_loans);
+
+  void _seedDemoData() {
+    if (_loans.isNotEmpty) return;
+    
+    final now = DateTime.now();
+    _loans.addAll([
+      Loan(name: 'Personal Loan', type: LoanType.personal, currency: Currency.mxn, principal: 50000, annualRate: 15, termMonths: 24, startDate: now.subtract(const Duration(days: 90))),
+      Loan(name: 'Mortgage', type: LoanType.hipotecario, currency: Currency.usd, principal: 250000, annualRate: 4.5, termMonths: 240, startDate: DateTime(2020, 1, 15)),
+      Loan(name: 'Hybrid Car', type: LoanType.auto, currency: Currency.mxn, principal: 350000, annualRate: 11.9, termMonths: 48, startDate: now),
+      Loan(name: 'Visa Credit', type: LoanType.creditCard, currency: Currency.usd, principal: 2000, annualRate: 18, termMonths: 12, startDate: now.subtract(const Duration(days: 30))),
+    ]);
+  }
+
+  void resetData() {
+    _loans.clear();
+    _seedDemoData();
+    notifyListeners();
+  }
 
   void addLoan(Loan loan) {
     _loans.add(loan);
     notifyListeners();
+  }
+  
+  void updateLoan(Loan updatedLoan) {
+    final index = _loans.indexWhere((l) => l.id == updatedLoan.id);
+    if (index != -1) {
+      _loans[index] = updatedLoan;
+      notifyListeners();
+    }
   }
 
   void deleteLoan(String id) {
@@ -56,9 +84,29 @@ class LoanRepository extends ChangeNotifier {
   }
 
   double _calculateCurrentBalance(Loan loan) {
-    // For MVP v0.2, assuming no payments made yet, so balance is principal.
-    // In future versions, this will check payments history.
-    return loan.principal; 
+    if (loan.principal <= 0) return 0.0;
+    
+    // Calculate months elapsed since start date
+    final elapsed = getMonthsElapsed(loan);
+    
+    // If loan is new (0 months or negative), balance is principal
+    if (elapsed <= 0) return loan.principal;
+
+    // Use calculateWithExtras to account for any extras (though demo data has none initially)
+    // Using calculateWithExtras covers both base and extra scenarios.
+    final schedule = _amortizationService.calculateWithExtras(loan);
+    
+    if (schedule.isEmpty) return loan.principal;
+
+    // If elapsed > term or schedule, returning 0 is handled in getStatus logic 
+    // or we can safely return 0 here if index exceeds table.
+    if (elapsed >= schedule.length) {
+      return schedule.last.balance; // Should be 0 or close to 0
+    }
+
+    // Schedule is 1-based period (row 0 is period 1).
+    // If elapsed is 1 month, we want balance after payment 1 (index 0).
+    return schedule[elapsed - 1].balance;
   }
 
   // Helpers

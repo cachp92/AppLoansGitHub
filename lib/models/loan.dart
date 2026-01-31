@@ -1,5 +1,8 @@
 
 
+import 'dart:math';
+import 'extra_payment.dart';
+
 enum LoanType {
   personal,
   hipotecario,
@@ -43,9 +46,10 @@ class Loan {
   final double annualRate; // Tasa anual %
   final int termMonths; // Plazo en meses
   final DateTime startDate;
+  final List<ExtraPayment> extraPayments;
 
   Loan({
-    required this.id,
+    String? id,
     required this.name,
     required this.type,
     required this.currency,
@@ -53,7 +57,8 @@ class Loan {
     required this.annualRate,
     required this.termMonths,
     required this.startDate,
-  });
+    this.extraPayments = const [],
+  }) : id = id ?? '${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(10000)}';
 
   double get monthlyRate => annualRate / 100 / 12;
 
@@ -65,6 +70,30 @@ class Loan {
 
 
     // Dart 3.0 has pow inside dart:math.
-    return 0.0; // Placeholder, logic moved to service for clean separation, or we can implement basic here.
+  // Placeholder, logic moved to service for clean separation, or we can implement basic here.
+    return 0.0; 
+  }
+
+  Loan copyWith({
+    String? name,
+    LoanType? type,
+    Currency? currency,
+    double? principal,
+    double? annualRate,
+    int? termMonths,
+    DateTime? startDate,
+    List<ExtraPayment>? extraPayments,
+  }) {
+    return Loan(
+      id: id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      currency: currency ?? this.currency,
+      principal: principal ?? this.principal,
+      annualRate: annualRate ?? this.annualRate,
+      termMonths: termMonths ?? this.termMonths,
+      startDate: startDate ?? this.startDate,
+      extraPayments: extraPayments ?? this.extraPayments,
+    );
   }
 }

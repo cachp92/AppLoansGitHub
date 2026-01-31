@@ -5,8 +5,9 @@ import '../../repositories/loan_repository.dart';
 
 class LoanFormScreen extends StatefulWidget {
   final LoanRepository repository;
+  final Loan? loan; // Optional for edit
 
-  const LoanFormScreen({super.key, required this.repository});
+  const LoanFormScreen({super.key, required this.repository, this.loan});
 
   @override
   State<LoanFormScreen> createState() => _LoanFormScreenState();
@@ -16,26 +17,41 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
   final _formKey = GlobalKey<FormState>();
   
   // Controllers
-  final _nameController = TextEditingController();
-  final _amountController = TextEditingController();
-  final _rateController = TextEditingController();
-  final _termController = TextEditingController();
+  late TextEditingController _nameController;
+  late TextEditingController _amountController;
+  late TextEditingController _rateController;
+  late TextEditingController _termController;
   
   // State
-  LoanType _selectedType = LoanType.personal;
-  Currency _selectedCurrency = Currency.mxn;
-  DateTime _startDate = DateTime.now();
+  late LoanType _selectedType;
+  late Currency _selectedCurrency;
+  late DateTime _startDate;
+
+  @override
+  void initState() {
+    super.initState();
+    final l = widget.loan;
+    _nameController = TextEditingController(text: l?.name ?? '');
+    _amountController = TextEditingController(text: l?.principal.toString() ?? '');
+    _rateController = TextEditingController(text: l?.annualRate.toString() ?? '');
+    _termController = TextEditingController(text: l?.termMonths.toString() ?? '');
+    
+    _selectedType = l?.type ?? LoanType.personal;
+    _selectedCurrency = l?.currency ?? Currency.mxn;
+    _startDate = l?.startDate ?? DateTime.now();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Loan')),
+      appBar: AppBar(title: Text(widget.loan == null ? 'New Loan' : 'Edit Loan')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
+              // ... existing widgets will use the controllers initialized in initState
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Loan Name'),
@@ -120,7 +136,7 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
                 height: 50,
                 child: FilledButton(
                   onPressed: _saveLoan,
-                  child: const Text('Save Loan'),
+                  child: Text(widget.loan == null ? 'Save Loan' : 'Update Loan'),
                 ),
               ),
             ],
@@ -133,7 +149,7 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
   void _saveLoan() {
     if (_formKey.currentState!.validate()) {
       final loan = Loan(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.loan?.id, // Keep ID if editing
         name: _nameController.text,
         type: _selectedType,
         currency: _selectedCurrency,
@@ -141,9 +157,14 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
         annualRate: double.parse(_rateController.text),
         termMonths: int.parse(_termController.text),
         startDate: _startDate,
+        extraPayments: widget.loan?.extraPayments ?? [], // Preserve extras
       );
 
-      widget.repository.addLoan(loan);
+      if (widget.loan == null) {
+        widget.repository.addLoan(loan);
+      } else {
+        widget.repository.updateLoan(loan);
+      }
       Navigator.pop(context);
     }
   }
