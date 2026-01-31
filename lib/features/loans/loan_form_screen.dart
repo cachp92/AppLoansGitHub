@@ -146,7 +146,7 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
     );
   }
 
-  void _saveLoan() {
+  Future<void> _saveLoan() async {
     if (_formKey.currentState!.validate()) {
       final loan = Loan(
         id: widget.loan?.id, // Keep ID if editing
@@ -160,12 +160,20 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
         extraPayments: widget.loan?.extraPayments ?? [], // Preserve extras
       );
 
-      if (widget.loan == null) {
-        widget.repository.addLoan(loan);
-      } else {
-        widget.repository.updateLoan(loan);
+      try {
+        if (widget.loan == null) {
+          await widget.repository.addLoan(loan);
+        } else {
+          await widget.repository.updateLoan(loan);
+        }
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error saving loan: $e'), backgroundColor: Colors.red),
+          );
+        }
       }
-      Navigator.pop(context);
     }
   }
 }

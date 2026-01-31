@@ -38,10 +38,21 @@ class LoanDetailScreen extends StatelessWidget {
                    content: const Text('Are you sure you want to remove this loan permanently?'),
                    actions: [
                      TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-                     FilledButton(onPressed: () {
-                       repository.deleteLoan(loan.id);
-                       Navigator.pop(ctx);
-                       Navigator.pop(context);
+                     FilledButton(onPressed: () async {
+                       try {
+                         await repository.deleteLoan(loan.id);
+                         if (context.mounted) {
+                           Navigator.pop(ctx);
+                           Navigator.pop(context);
+                         }
+                       } catch (e) {
+                         if (context.mounted) {
+                           Navigator.pop(ctx); // Close dialog to show snackbar on screen
+                           ScaffoldMessenger.of(context).showSnackBar(
+                             SnackBar(content: Text('Error deleting loan: $e'), backgroundColor: Colors.red),
+                           );
+                         }
+                       }
                      }, child: const Text('Delete')),
                    ],
                  ));
@@ -332,7 +343,7 @@ class _ExtraPaymentsCard extends StatelessWidget {
        ),
        actions: [
          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-         FilledButton(onPressed: () {
+         FilledButton(onPressed: () async {
            final p = int.tryParse(periodCtrl.text);
            final a = double.tryParse(amountCtrl.text);
 
@@ -366,8 +377,15 @@ class _ExtraPaymentsCard extends StatelessWidget {
            final updatedLoan = loan.copyWith(
              extraPayments: [...loan.extraPayments, newExtra]
            );
-           repository.updateLoan(updatedLoan);
-           Navigator.pop(ctx);
+           
+           try {
+             await repository.updateLoan(updatedLoan);
+             if (context.mounted) Navigator.pop(ctx);
+           } catch (e) {
+             if (context.mounted) {
+               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+             }
+           }
            
          }, child: const Text('Add Payment')),
        ],
