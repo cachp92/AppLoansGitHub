@@ -10,57 +10,36 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Financial Overview'),
-        actions: [
-          IconButton(
-              onPressed: () {}, icon: const Icon(Icons.notifications_outlined)),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Dashboard')),
       drawer: AppDrawer(repository: repository),
       body: ListenableBuilder(
         listenable: repository,
         builder: (context, _) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _SummaryCard(
-                  title: 'Total Principals',
-                  value: FormatUtils.currency(repository.totalBalance),
-                  subtitle: 'Remaining Debt',
-                  icon: Icons.account_balance_wallet,
-                  color: Theme.of(context).colorScheme.primary,
-                  isHero: true,
+                  title: 'Active Loans',
+                  value: '${repository.totalLoansCount}',
+                  subtitle: 'Total registered',
+                  icon: Icons.assignment,
+                  color: Colors.blueAccent,
                 ),
-                const SizedBox(height: 24),
-                Text('Quick Stats',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey[600], fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Active Loans',
-                        value: '${repository.totalLoansCount}',
-                        subtitle: 'Loans',
-                        icon: Icons.assignment_outlined,
-                        color: Colors.blueAccent,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Monthly Bill',
-                        value: FormatUtils.currency(repository.totalMonthlyPayment),
-                        subtitle: 'Obligations',
-                        icon: Icons.calendar_today_outlined,
-                        color: Colors.orange,
-                      ),
-                    ),
-                  ],
+                _SummaryCard(
+                  title: 'Total Principal',
+                  value: FormatUtils.currency(repository.totalBalance),
+                  subtitle: 'Remaining balance',
+                  icon: Icons.account_balance_wallet,
+                  color: Colors.green,
+                ),
+                _SummaryCard(
+                  title: 'Monthly Commitments',
+                  value: FormatUtils.currency(repository.totalMonthlyPayment),
+                  subtitle: 'Total estimated payments',
+                  icon: Icons.calendar_today,
+                  color: Colors.orange,
                 ),
               ],
             ),
@@ -77,7 +56,6 @@ class _SummaryCard extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final Color color;
-  final bool isHero;
 
   const _SummaryCard({
     required this.title,
@@ -85,65 +63,51 @@ class _SummaryCard extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.color,
-    this.isHero = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cardColor = isHero ? theme.colorScheme.primary : Colors.white;
-    final textColor = isHero ? Colors.white : theme.colorScheme.onSurface;
-    final subTextColor = isHero ? Colors.white70 : Colors.grey[500];
-    final iconBg = isHero ? Colors.white24 : color.withOpacity(0.1);
-    final iconColor = isHero ? Colors.white : color;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: isHero ? null : Border.all(color: Colors.grey.shade200),
-        boxShadow: isHero
-            ? [
-                BoxShadow(
-                  color: color.withOpacity(0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                )
-              ]
-            : null,
+    
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.withOpacity(0.15)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(14),
               ),
-              if (isHero) const Icon(Icons.more_horiz, color: Colors.white54),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(subtitle,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: subTextColor,
-                letterSpacing: 0.5,
-              )),
-          const SizedBox(height: 4),
-          Text(value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              )),
-        ],
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.grey[600],
+                      )),
+                  const SizedBox(height: 4),
+                  Text(value,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      )),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

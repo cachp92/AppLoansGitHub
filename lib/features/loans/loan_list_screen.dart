@@ -3,6 +3,7 @@ import '../../models/loan.dart';
 import '../../repositories/loan_repository.dart';
 import '../dashboard/dashboard_screen.dart'; // For Drawer
 import '../../utils/format_utils.dart';
+import '../../widgets/common_widgets.dart';
 
 class LoanListScreen extends StatelessWidget {
   final LoanRepository repository;
@@ -14,6 +15,7 @@ class LoanListScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Loans'),
+        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -37,9 +39,7 @@ class LoanListScreen extends StatelessWidget {
       ),
       drawer: AppDrawer(repository: repository),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, '/create-loan');
-        },
+        onPressed: () => Navigator.pushNamed(context, '/create-loan'),
         label: const Text('New Loan'),
         icon: const Icon(Icons.add),
       ),
@@ -51,11 +51,18 @@ class LoanListScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   const Icon(Icons.description_outlined, size: 64, color: Colors.grey),
-                   const SizedBox(height: 16),
-                   Text('No loans yet', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey[600])),
+                   Container(
+                     padding: const EdgeInsets.all(24),
+                     decoration: BoxDecoration(
+                       color: Colors.grey.shade100,
+                       shape: BoxShape.circle,
+                     ),
+                     child: Icon(Icons.folder_open, size: 48, color: Colors.grey.shade400),
+                   ),
+                   const SizedBox(height: 24),
+                   Text('No loans yet', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.grey[800])),
                    const SizedBox(height: 8),
-                   const Text('Add your first loan to get started.', style: TextStyle(color: Colors.grey)),
+                   Text('Add your first loan to get started.', style: TextStyle(color: Colors.grey[600])),
                    const SizedBox(height: 24),
                    FilledButton.tonalIcon(
                      onPressed: () => Navigator.pushNamed(context, '/create-loan'),
@@ -90,117 +97,91 @@ class _LoanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final status = repository.getStatus(loan);
-    final isActive = status == 'Active';
-    final theme = Theme.of(context);
-    
-    // Calculate progress
-    final totalAmount = loan.principal; // Principal
-    final currentBalance = repository.getCurrentBalance(loan);
-    // Simple progress estimation: (Total - Balance) / Total. 
-    // In real amortization it's complex, but this is a good UI proxy.
-    final progress = (totalAmount - currentBalance) / totalAmount;
-    final clampedProgress = progress.clamp(0.0, 1.0);
+    final isActive = status == 'Active'; // Keep for MoneyText styling
 
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          Navigator.pushNamed(context, '/loan-detail', arguments: loan);
-        },
+        onTap: () => Navigator.pushNamed(context, '/loan-detail', arguments: loan),
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Icon + Name + Status
+              // Top Row: Name + Status
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(_getIconForType(loan.type), 
-                      size: 20, 
-                      color: theme.colorScheme.primary
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          loan.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          '${loan.type.label} • ${_formatDate(loan.startDate)}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      loan.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   _StatusChip(status: status, isActive: isActive),
                 ],
               ),
-              
-              const SizedBox(height: 16),
-              
-              // Balance & Progress
+              const SizedBox(height: 8),
+
+              // Type + Date
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('Remaining Balance', style: theme.textTheme.bodySmall),
+                  Icon(_getIconForType(loan.type), size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
                   Text(
-                    FormatUtils.currency(currentBalance),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
+                    '${loan.type.label} • ${FormatUtils.date(loan.startDate)}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 13),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: clampedProgress,
-                backgroundColor: Colors.grey[200],
-                color: theme.colorScheme.secondary,
-                borderRadius: BorderRadius.circular(4),
-                minHeight: 6,
+
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1),
               ),
-              const SizedBox(height: 8),
-              
-              // Footer Stats
+
+              // Bottom Row: Payment + Balance
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
-                    '${(clampedProgress * 100).toInt()}% Paid', 
-                    style: TextStyle(
-                      fontSize: 12, 
-                      fontWeight: FontWeight.bold, 
-                      color: theme.colorScheme.secondary
-                    )
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${repository.getMonthsRemaining(loan)} mos left',
-                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                      ),
-                    ],
-                  ),
+                   Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       Text('Monthly', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                       MoneyText(amount: repository.getMonthlyPayment(loan)),
+                     ],
+                   ),
+                   Column(
+                     crossAxisAlignment: CrossAxisAlignment.end,
+                     children: [
+                       Text('Balance', style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                       MoneyText(
+                         amount: repository.getCurrentBalance(loan),
+                         style: TextStyle(
+                           color: isActive ? Theme.of(context).primaryColor : Colors.grey[700],
+                           fontSize: 18,
+                         )
+                       ),
+                     ],
+                   ),
                 ],
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${repository.getMonthsRemaining(loan)} months left',
+                  style: TextStyle(color: Colors.grey[400], fontSize: 11)
+                ),
               ),
             ],
           ),
@@ -217,17 +198,12 @@ class _LoanCard extends StatelessWidget {
       case LoanType.creditCard: return Icons.credit_card;
     }
   }
-
-  String _formatDate(DateTime date) {
-    return '${date.month}/${date.day}/${date.year}';
-  }
 }
 
 class _StatusChip extends StatelessWidget {
   final String status;
   final bool isActive;
-
-  const _StatusChip({required this.status, required this.isActive});
+  const _StatusChip({super.key, required this.status, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
