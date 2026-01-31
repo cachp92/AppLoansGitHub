@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'theme/app_theme.dart';
 import 'services/amortization_service.dart';
 import 'repositories/loan_repository.dart';
@@ -10,7 +12,12 @@ import 'features/loans/loan_list_screen.dart';
 import 'features/loans/loan_form_screen.dart';
 import 'features/loans/loan_detail_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   // Dependencies (Manual Injection)
   final amortizationService = AmortizationService();
   final loanRepository = LoanRepository(amortizationService);

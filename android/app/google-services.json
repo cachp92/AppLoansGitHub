@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "666709690528",
+    "project_id": "apploansag",
+    "storage_bucket": "apploansag.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:666709690528:android:e8b934f2957b922e9c21c5",
+        "android_client_info": {
+          "package_name": "com.example.app_loans_ag"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxomDVjCoAIoVjNsvvETjGBa5gNx0AlaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
